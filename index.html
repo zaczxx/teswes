@@ -74,11 +74,11 @@
         <video id="mainVideo" controls autoplay></video>
         <div class="now-playing">
             <span id="videoTitle">Memutar video...</span>
-            <button id="nextBtn" onclick="playNext()">EPS Selanjutnya ➔</button>
+            <button id="nextBtn" onclick="playNext()">EPS LANJUTNYA ➔</button>
         </div>
     </div>
 
-    <h2 style="color: #e50914; margin-bottom: 5px;">DramaBox</h2>
+    <h2 style="color: #e50914; margin-bottom: 5px;">DramaBox By ZuL</h2>
     
     <div class="search-box">
         <input type="text" id="queryInput" placeholder="Cari judul drama...">
@@ -109,6 +109,116 @@
         try {
             const response = await fetch(API_SUGGEST);
             const data = await response.json();
+            renderCards(data);
+        } catch (e) {
+            resDiv.innerHTML = "Gagal memuat saran.";
+        }
+    }
+
+    // 2. Fungsi Cari Drama
+    async function searchDrama() {
+        const query = document.getElementById('queryInput').value;
+        if(!query) return;
+        
+        const resDiv = document.getElementById('results');
+        const resTitle = document.getElementById('resultTitle');
+        
+        resTitle.innerText = "Hasil Pencarian: " + query;
+        resDiv.innerHTML = "Mencari...";
+        document.getElementById('epSection').style.display = "none";
+
+        try {
+            const response = await fetch(API_SEARCH + encodeURIComponent(query));
+            const data = await response.json();
+            renderCards(data);
+        } catch (e) {
+            resDiv.innerHTML = "Gagal mencari drama.";
+        }
+    }
+
+    // Fungsi Pembantu untuk menampilkan kartu ke Grid
+    function renderCards(data) {
+        const resDiv = document.getElementById('results');
+        resDiv.innerHTML = "";
+        if(data.length === 0) {
+            resDiv.innerHTML = "Tidak ditemukan.";
+            return;
+        }
+        data.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `<img src="${item.cover}"><div class="card-name">${item.bookName}</div>`;
+            card.onclick = () => loadEpisodes(item.bookId, item.bookName);
+            resDiv.appendChild(card);
+        });
+    }
+
+    // Fungsi Load Episode & Play Video (Sama seperti sebelumnya)
+    async function loadEpisodes(bookId, bookName) {
+        const epSection = document.getElementById('epSection');
+        const epList = document.getElementById('epList');
+        epSection.style.display = "block";
+        document.getElementById('dramaTitleDisp').innerText = bookName;
+        epList.innerHTML = "Memuat...";
+
+        try {
+            const response = await fetch(API_EPISODE + bookId);
+            currentEpisodes = await response.json(); 
+            currentDramaName = bookName;
+            epList.innerHTML = "";
+
+            currentEpisodes.forEach((ep, index) => {
+                const div = document.createElement('div');
+                div.className = 'ep-card';
+                div.id = `ep-item-${index}`;
+                div.innerText = ep.chapterName;
+                div.onclick = () => playVideo(index);
+                epList.appendChild(div);
+            });
+            epSection.scrollIntoView({ behavior: 'smooth' });
+        } catch (e) { epList.innerHTML = "Gagal memuat episode."; }
+    }
+
+    function playVideo(index) {
+        currentEpIndex = index;
+        const video = document.getElementById('mainVideo');
+        const epData = currentEpisodes[index];
+        const nextBtn = document.getElementById('nextBtn');
+
+        nextBtn.style.display = (index < currentEpisodes.length - 1) ? "block" : "none";
+        document.querySelectorAll('.ep-card').forEach(el => el.style.background = "#333");
+        const activeItem = document.getElementById(`ep-item-${index}`);
+        if(activeItem) activeItem.style.background = "#e50914";
+
+        let videoUrl = "";
+        try {
+            const defaultCdn = epData.cdnList.find(c => c.isDefault === 1) || epData.cdnList[0];
+            const defaultPath = defaultCdn.videoPathList.find(v => v.isDefault === 1) || defaultCdn.videoPathList[0];
+            videoUrl = defaultPath.videoPath;
+        } catch (e) { return alert("Link video bermasalah."); }
+
+        document.getElementById('videoTitle').innerText = `${currentDramaName} - ${epData.chapterName}`;
+        document.getElementById('playerContainer').style.display = "block";
+        video.src = videoUrl;
+        video.load();
+        video.play();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function playNext() {
+        if (currentEpIndex < currentEpisodes.length - 1) {
+            playVideo(currentEpIndex + 1);
+        }
+    }
+
+    document.getElementById('mainVideo').onended = () => playNext();
+
+    // Jalankan saran saat pertama kali buka web
+    loadSuggestions();
+</script>
+
+</body>
+</html>
             renderCards(data);
         } catch (e) {
             resDiv.innerHTML = "Gagal memuat saran.";

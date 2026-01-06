@@ -11,6 +11,7 @@
         }
         .container { max-width: 900px; margin: auto; }
         
+        /* Player Area */
         #playerContainer { 
             display: none; margin-bottom: 20px; background: #000; 
             border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
@@ -26,6 +27,7 @@
             border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 12px; display: none;
         }
 
+        /* Search Box */
         .search-box { display: flex; gap: 10px; margin: 20px 0; }
         input { 
             flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #333; 
@@ -36,28 +38,31 @@
             border: none; border-radius: 8px; cursor: pointer; font-weight: bold; 
         }
 
+        /* Section Title */
         .section-title { color: #e50914; margin: 25px 0 15px 0; border-left: 4px solid #e50914; padding-left: 10px; }
 
+        /* Grid Design */
         .grid { 
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; 
         }
         .card { 
             background: #1e1e1e; border-radius: 10px; cursor: pointer; border: 1px solid #333; 
             overflow: hidden; transition: transform 0.2s;
         }
         .card:hover { transform: scale(1.03); border-color: #e50914; }
-        .card img { width: 100%; height: 200px; object-fit: cover; }
-        .card-name { padding: 10px; font-size: 12px; text-align: center; font-weight: 500; }
+        .card img { width: 100%; height: 220px; object-fit: cover; }
+        .card-name { padding: 10px; font-size: 13px; text-align: center; font-weight: 500; }
 
+        /* Episode List */
         .ep-section { 
             display: none; margin-top: 30px; background: #1e1e1e; padding: 20px; border-radius: 12px; 
         }
         .ep-grid { 
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 8px; margin-top: 15px; 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 15px; 
         }
         .ep-card { 
             background: #333; padding: 12px 5px; text-align: center; border-radius: 6px; 
-            cursor: pointer; font-size: 11px; font-weight: bold;
+            cursor: pointer; font-size: 12px; font-weight: bold;
         }
         .ep-card:hover { background: #e50914; }
     </style>
@@ -69,18 +74,18 @@
         <video id="mainVideo" controls autoplay></video>
         <div class="now-playing">
             <span id="videoTitle">Memutar video...</span>
-            <button id="nextBtn" onclick="playNext()">EPS LANJUTNYA ➔</button>
+            <button id="nextBtn" onclick="playNext()">EPS Selanjutnya ➔</button>
         </div>
     </div>
 
-    <h2 style="color: #e50914; margin-bottom: 5px;">DramaBox Lib</h2>
+    <h2 style="color: #e50914; margin-bottom: 5px;">DramaBox</h2>
     
     <div class="search-box">
         <input type="text" id="queryInput" placeholder="Cari judul drama...">
         <button class="btn-search" onclick="searchDrama()">CARI</button>
     </div>
 
-    <h3 id="resultTitle" class="section-title">Memuat saran...</h3>
+    <h3 id="resultTitle" class="section-title">Saran Terbaru</h3>
     <div id="results" class="grid"></div>
 
     <div id="epSection" class="ep-section">
@@ -90,28 +95,27 @@
 </div>
 
 <script>
-    // Penambahan Proxy untuk menembus CORS saat online
-    const PROXY = "https://corsproxy.io/?"; 
-    const API_SEARCH = PROXY + encodeURIComponent("https://api.sansekai.my.id/api/dramabox/search?query=");
-    const API_EPISODE = PROXY + encodeURIComponent("https://api.sansekai.my.id/api/dramabox/allepisode?bookId=");
-    const API_SUGGEST = PROXY + encodeURIComponent("https://api.sansekai.my.id/api/dramabox/dubindo?classify=terbaru");
+    const API_SEARCH = "https://api.sansekai.my.id/api/dramabox/search?query=";
+    const API_EPISODE = "https://api.sansekai.my.id/api/dramabox/allepisode?bookId=";
+    const API_SUGGEST = "https://api.sansekai.my.id/api/dramabox/dubindo?classify=terbaru";
 
     let currentEpisodes = [];
     let currentDramaName = "";
     let currentEpIndex = -1;
 
+    // 1. Fungsi Load Saran (Otomatis jalan saat web dibuka)
     async function loadSuggestions() {
-        const resTitle = document.getElementById('resultTitle');
+        const resDiv = document.getElementById('results');
         try {
             const response = await fetch(API_SUGGEST);
             const data = await response.json();
-            resTitle.innerText = "Saran Terbaru";
             renderCards(data);
         } catch (e) {
-            resTitle.innerText = "Gagal memuat saran. Coba refresh.";
+            resDiv.innerHTML = "Gagal memuat saran.";
         }
     }
 
+    // 2. Fungsi Cari Drama
     async function searchDrama() {
         const query = document.getElementById('queryInput').value;
         if(!query) return;
@@ -124,8 +128,7 @@
         document.getElementById('epSection').style.display = "none";
 
         try {
-            const url = PROXY + encodeURIComponent("https://api.sansekai.my.id/api/dramabox/search?query=" + query);
-            const response = await fetch(url);
+            const response = await fetch(API_SEARCH + encodeURIComponent(query));
             const data = await response.json();
             renderCards(data);
         } catch (e) {
@@ -133,11 +136,12 @@
         }
     }
 
+    // Fungsi Pembantu untuk menampilkan kartu ke Grid
     function renderCards(data) {
         const resDiv = document.getElementById('results');
         resDiv.innerHTML = "";
-        if(!data || data.length === 0) {
-            resDiv.innerHTML = "Data tidak ditemukan.";
+        if(data.length === 0) {
+            resDiv.innerHTML = "Tidak ditemukan.";
             return;
         }
         data.forEach(item => {
@@ -149,16 +153,16 @@
         });
     }
 
+    // Fungsi Load Episode & Play Video (Sama seperti sebelumnya)
     async function loadEpisodes(bookId, bookName) {
         const epSection = document.getElementById('epSection');
         const epList = document.getElementById('epList');
         epSection.style.display = "block";
         document.getElementById('dramaTitleDisp').innerText = bookName;
-        epList.innerHTML = "Memuat episode...";
+        epList.innerHTML = "Memuat...";
 
         try {
-            const url = PROXY + encodeURIComponent("https://api.sansekai.my.id/api/dramabox/allepisode?bookId=" + bookId);
-            const response = await fetch(url);
+            const response = await fetch(API_EPISODE + bookId);
             currentEpisodes = await response.json(); 
             currentDramaName = bookName;
             epList.innerHTML = "";
@@ -167,7 +171,7 @@
                 const div = document.createElement('div');
                 div.className = 'ep-card';
                 div.id = `ep-item-${index}`;
-                div.innerText = ep.chapterName || `EP ${index + 1}`;
+                div.innerText = ep.chapterName;
                 div.onclick = () => playVideo(index);
                 epList.appendChild(div);
             });
@@ -193,7 +197,7 @@
             videoUrl = defaultPath.videoPath;
         } catch (e) { return alert("Link video bermasalah."); }
 
-        document.getElementById('videoTitle').innerText = `${currentDramaName} - ${epData.chapterName || 'Video'}`;
+        document.getElementById('videoTitle').innerText = `${currentDramaName} - ${epData.chapterName}`;
         document.getElementById('playerContainer').style.display = "block";
         video.src = videoUrl;
         video.load();
@@ -208,8 +212,34 @@
     }
 
     document.getElementById('mainVideo').onended = () => playNext();
+
+    // Jalankan saran saat pertama kali buka web
     loadSuggestions();
 </script>
 
 </body>
 </html>
+
+        document.getElementById('videoTitle').innerText = `${currentDramaName} - ${epData.chapterName}`;
+        document.getElementById('playerContainer').style.display = "block";
+        video.src = videoUrl;
+        video.load();
+        video.play();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function playNext() {
+        if (currentEpIndex < currentEpisodes.length - 1) {
+            playVideo(currentEpIndex + 1);
+        }
+    }
+
+    document.getElementById('mainVideo').onended = () => playNext();
+
+    // Jalankan saran saat pertama kali buka web
+    loadSuggestions();
+</script>
+
+</body>
+</html>
+

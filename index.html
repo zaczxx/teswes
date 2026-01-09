@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <title>DramaBox Official</title>
+    <style>
+        :root {
+            --accent: #f4b454;
+            --accent-glow: rgba(244, 180, 84, 0.3);
+            --bg: #070b14;
+            --panel: rgba(25, 34, 50, 0.8);
+            --radius: 16px;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #f4f2ec;
+            background-color: var(--bg);
+            background-image: radial-gradient(circle at 0% 0%, rgba(244, 180, 84, 0.05) 0%, transparent 50%);
+            line-height: 1.5;
+            padding-bottom: 60px;
+        }
+
+        /* --- HEADER FIXED --- */
+        header { 
+            padding: 15px 15px 5px; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(7, 11, 20, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .brand { 
+            display: flex; align-items: center; gap: 12px; 
+            padding: 8px 24px; border-radius: 50px; 
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-bottom: 8px;
+        }
+        .brand-logo { height: 28px; width: auto; object-fit: contain; }
+        header h1 { 
+            margin: 0; font-size: 1.2rem; font-weight: 800; letter-spacing: 0.5px;
+            background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        .marquee-box {
+            width: 100%;
+            overflow: hidden;
+            background: rgba(244, 180, 84, 0.05);
+            padding: 3px 0;
+        }
+        .marquee-box marquee {
+            color: var(--accent);
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .marquee-box a { color: var(--accent); text-decoration: none; }
+
+        .page { 
+            max-width: 1100px; 
+            margin: 0 auto; 
+            padding: 115px 16px 20px; 
+        }
+
+        .search-row { 
+            display: flex; gap: 10px; margin-bottom: 25px; 
+            background: var(--panel); padding: 8px; border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .search-row input { 
+            flex: 1; padding: 12px 16px; border-radius: 10px; border: none; 
+            background: #101826; color: #fff; outline: none; font-size: 1rem;
+        }
+        .btn { 
+            border: none; padding: 12px 24px; border-radius: 10px; 
+            background: var(--accent); color: #000; font-weight: 700; 
+            cursor: pointer; transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.96); }
+
+        .drama-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+            gap: 16px; 
+        }
+
+        @media (max-width: 380px) {
+            .drama-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .brand-logo { height: 24px; }
+            header h1 { font-size: 1rem; }
+            .page { padding-top: 105px; }
+        }
+
+        .drama-card { 
+            background: var(--panel); border-radius: var(--radius); 
+            padding: 10px; border: 1px solid rgba(255,255,255,0.03);
+            transition: 0.3s;
+        }
+        .drama-card img { 
+            width: 100%; aspect-ratio: 2/3; object-fit: cover; 
+            border-radius: 12px; margin-bottom: 10px;
+            background: #101826;
+        }
+        .drama-title { 
+            font-size: 0.9rem; font-weight: 600; text-align: center; 
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            overflow: hidden; height: 2.7em; line-height: 1.35;
+        }
+
+        .watch-container { max-width: 800px; margin: 0 auto; }
+        video { 
+            width: 100%; border-radius: 14px; background: #000; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);
+        }
+        .ep-info { margin: 15px 0; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .ep-info h2 { font-size: 1.1rem; color: var(--accent); margin: 0; }
+        
+        .episode-grid { 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(55px, 1fr)); 
+            gap: 8px; margin-top: 20px; 
+        }
+        .ep-btn { 
+            padding: 12px 0; background: #1a2436; color: #fff; 
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; 
+            cursor: pointer; font-size: 0.85rem; font-weight: 600;
+        }
+        .ep-btn.active { 
+            background: var(--accent); color: #000; border-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .hidden { display: none; }
+        .loading { 
+            position: fixed; inset: 0; background: var(--bg); 
+            display: none; place-items: center; z-index: 2000; 
+        }
+        .loading.show { display: grid; }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1);
+            border-top: 4px solid var(--accent); border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        footer { text-align: center; padding: 25px; font-size: 0.75rem; opacity: 0.5; }
+    </style>
+</head>
+<body>
+
+<div class="loading" id="loader"><div class="spinner"></div></div>
+
+<header>
+    <div class="brand">
+        <img class="brand-logo" src="https://raw.githubusercontent.com/pikaproject/pikastream/refs/heads/main/dramabox(1).png" alt="Logo">
+        <h1>DramaBox</h1>
+    </div>
+    <div class="marquee-box">
+        <marquee scrollamount="4">
+            <a href="https://wa.me/087763104715">• SPECIAL THANKS FOR -> ZuL • Gemini Ai • sansekai • ENJOY WATCHING! • </a>
+        </marquee>
+    </div>
+</header>
+
+<main class="page">
+    <div id="homeView">
+        <div class="search-row">
+            <input id="searchInput" placeholder="Cari judul drama...">
+            <button class="btn" onclick="search()">CARI</button>
+        </div>
+        <div class="drama-grid" id="mainGrid"></div>
+    </div>
+
+    <div id="watchView" class="hidden">
+        <div class="watch-container">
+            <video id="player" controls playsinline poster=""></video>
+            <div class="ep-info">
+                <h2 id="displayEpName">Memuat episode...</h2>
+                <div id="displayDramaTitle" style="font-size: 0.85rem; opacity: 0.6; margin-top: 4px;"></div>
+            </div>
+            <div class="episode-grid" id="epGrid"></div>
+        </div>
+    </div>
+</main>
+
+
+<script>
+    const API = "https://api.sansekai.my.id/api/dramabox/";
+    let episodes = [];
+    let curIdx = 0;
+
+    const showLoad = (s) => document.getElementById('loader').classList.toggle('show', s);
+
+    window.onpopstate = () => { if (!document.getElementById('watchView').classList.contains('hidden')) goBack(false); };
+
+    function goBack(push = true) {
+        document.getElementById('player').pause();
+        document.getElementById('watchView').classList.add('hidden');
+        document.getElementById('homeView').classList.remove('hidden');
+        if(push) history.back();
+        window.scrollTo(0,0);
+    }
+
+    async function search(q = "") {
+        const query = document.getElementById('searchInput').value || q;
+        showLoad(true);
+        try {
+            const url = query ? `${API}search?query=${encodeURIComponent(query)}` : `${API}trending`;
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            // Handle jika data dibungkus dalam properti 'list' atau langsung array
+            const list = data.list || data;
+            
+            document.getElementById('mainGrid').innerHTML = list.map(i => {
+                // SESUAIKAN DENGAN JSON ANDA: coverWap
+                const poster = i.coverWap || i.bookCover || i.cover || "";
+                return `
+                <div class="drama-card" onclick="loadDrama('${i.bookId}', '${i.bookName.replace(/'/g, "\\'")}')">
+                    <img src="${poster}" loading="lazy" onerror="this.src='https://via.placeholder.com/200x300?text=No+Image'">
+                    <div class="drama-title">${i.bookName}</div>
+                </div>
+                `;
+            }).join('');
+        } catch(e) { console.error("Search Error:", e); }
+        showLoad(false);
+    }
+
+    async function loadDrama(id, name) {
+        showLoad(true);
+        try {
+            const res = await fetch(`${API}allepisode?bookId=${id}`);
+            const data = await res.json();
+            episodes = data.list || data;
+            document.getElementById('homeView').classList.add('hidden');
+            document.getElementById('watchView').classList.remove('hidden');
+            document.getElementById('displayDramaTitle').innerText = name;
+            history.pushState({view: 'watch'}, '');
+            document.getElementById('epGrid').innerHTML = episodes.map((_, i) => `
+                <button class="ep-btn" id="eb-${i}" onclick="play(${i})">${i+1}</button>
+            `).join('');
+            play(0);
+            window.scrollTo(0,0);
+        } catch(e) { alert("Gagal memuat episode"); }
+        showLoad(false);
+    }
+
+    function play(i) {
+        curIdx = i;
+        const ep = episodes[i];
+        document.querySelectorAll('.ep-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`eb-${i}`).classList.add('active');
+        const cdn = ep.cdnList.find(c => c.isDefault === 1) || ep.cdnList[0];
+        const path = cdn.videoPathList.find(v => v.isDefault === 1) || cdn.videoPathList[0];
+        const v = document.getElementById('player');
+        v.src = path.videoPath;
+        v.play().catch(() => {});
+        document.getElementById('displayEpName').innerText = "Episode " + (i + 1) + ": " + ep.chapterName;
+    }
+
+    document.getElementById('player').onended = () => {
+        if(curIdx < episodes.length - 1) play(curIdx + 1);
+    }
+
+    search();
+</script>
+</body>
+</html>
